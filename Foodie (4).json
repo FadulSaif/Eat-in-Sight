@@ -1,0 +1,496 @@
+{
+  "name": "Foodie",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {
+          "download": false
+        }
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        1824,
+        2464
+      ],
+      "id": "ac93f415-aca0-46d3-91dc-37431f8d0b94",
+      "name": "Telegram Trigger",
+      "webhookId": "e064c30f-ec80-462a-9e1c-1b671ae35250",
+      "credentials": {
+        "telegramApi": {
+          "id": "ZfFaHR6TzpJ83ahs",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ea9d9104-1ce3-4098-bc16-7275919f73ca",
+              "name": "telegramId",
+              "value": "={{ $json.message.chat.id }}",
+              "type": "string"
+            },
+            {
+              "id": "1a74d046-e514-492c-923c-dbfbc7e2043d",
+              "name": "username",
+              "value": "={{ $json.message.from.first_name }}",
+              "type": "string"
+            },
+            {
+              "id": "14a852a1-77c2-475e-9af4-26f3ed30c8e1",
+              "name": "msgText",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            },
+            {
+              "id": "706d7d7d-fe77-41bc-b043-8c3adbc58c09",
+              "name": "photoFileId",
+              "value": "={{ $json.message.photo && $json.message.photo.length > 0 ? $json.message.photo[$json.message.photo.length - 1].file_id : '' }}",
+              "type": "string"
+            },
+            {
+              "id": "44fc2c5f-5712-44d7-8856-d42a7ce4360b",
+              "name": "timestamp",
+              "value": "={{ $json.message.date }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {
+          "ignoreConversionErrors": true,
+          "dotNotation": true
+        }
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2048,
+        2464
+      ],
+      "id": "609e248d-0177-4f7d-acc6-e7bad2845b1b",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.msgText }}",
+                    "rightValue": "/",
+                    "operator": {
+                      "type": "string",
+                      "operation": "startsWith"
+                    },
+                    "id": "8443e22e-7f3f-4404-a228-f39ed2764d05"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Command"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "ebd2e78c-b132-4667-a4e6-0f00790722ec",
+                    "leftValue": "={{ $json.photoFileId }}",
+                    "rightValue": "",
+                    "operator": {
+                      "type": "string",
+                      "operation": "notEmpty",
+                      "singleValue": true
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Photo"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        2272,
+        2448
+      ],
+      "id": "2e2ecb80-9726-4dbc-8ffd-ab8f000d8363",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "resource": "file",
+        "fileId": "={{$json.photoFileId}}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        2496,
+        2464
+      ],
+      "id": "650af299-63ae-4a81-bb1f-cf991e620ec1",
+      "name": "Get a file",
+      "webhookId": "10b3fdd7-c6b8-4154-998e-447835153090",
+      "credentials": {
+        "telegramApi": {
+          "id": "ZfFaHR6TzpJ83ahs",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "User Input",
+        "height": 480,
+        "width": 816,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1792,
+        2320
+      ],
+      "id": "b397d9ee-391d-43e0-b216-c1cc17bb0528",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "operation": "analyze",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-pro",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-pro"
+        },
+        "text": "You are a professional nutrition analyst. The user has sent an image of a meal. \n\nYour tasks:\n1. Identify all visible food items in the photo.\n2. Estimate the approximate portion size (e.g., 1 cup rice, 200g chicken, 1 tablespoon sauce).\n3. For each food item, provide the following nutritional information:\n   - Calories (kcal)\n   - Protein (g)\n   - Carbohydrates (g)\n   - Fat (g)\n4. Calculate the total nutrition values for the entire meal.\n\nReturn the final result strictly in JSON format using this structure:\n\n{\n  \"meal_description\": \"Brief human-readable summary of what you see.\",\n  \"food_items\": [\n    {\n      \"name\": \"Food name\",\n      \"portion\": \"Portion size\",\n      \"calories\": 0,\n      \"protein_g\": 0,\n      \"carbs_g\": 0,\n      \"fat_g\": 0\n    }\n  ],\n  \"total\": {\n    \"calories\": 0,\n    \"protein_g\": 0,\n    \"carbs_g\": 0,\n    \"fat_g\": 0\n  },\n  \"confidence\": \"high\"\n}\n\n- If you are uncertain about a food item, set `\"confidence\": \"low\"` and give a reasonable estimate.\n- Respond **only in JSON**, no explanation, no markdown.\n",
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1,
+      "position": [
+        2720,
+        2368
+      ],
+      "id": "bf3d232d-d78a-404d-9c67-e7e57100c187",
+      "name": "Analyze an image",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "NqMblpLMQdrzrdFu",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const binaryData = $input.first().binary.data;\nconst base64Image = Buffer.from(binaryData.data, 'binary').toString('base64');\n\nreturn [{\n  json: {\n    image: base64Image,\n    mimeType: binaryData.mimeType,\n    telegramId: $input.first().json.telegramId,\n    username: $input.first().json.username\n  }\n}];"
+      },
+      "id": "c391b8a2-526d-4fb5-8304-c6b5ae7dccdb",
+      "name": "Convert Binary to Base64",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2720,
+        2560
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the Gemini AI response from the Analyze an image node\nconst geminiResponse = $('Analyze an image').first().json;\n\n// Extract the text response which contains the JSON\nconst responseText = geminiResponse.content.parts[0].text;\n\n// Parse the JSON from the response\nlet rawNutritionData;\ntry {\n  // Remove markdown code blocks if present\n  const cleanedText = responseText.replace(/```json\\n?/g, '').replace(/```\\n?/g, '').trim();\n  rawNutritionData = JSON.parse(cleanedText);\n} catch (error) {\n  console.error('Failed to parse nutrition data:', error);\n  rawNutritionData = {\n    meal_description: 'Unable to parse meal data',\n    food_items: [],\n    total: {\n      calories: 0,\n      protein_g: 0,\n      carbs_g: 0,\n      fat_g: 0\n    },\n    confidence: 'low'\n  };\n}\n\n// Get telegramId from the input (from Edit Fields node)\nconst telegramId = $input.first().json.telegramId || $('Edit Fields').first().json.telegramId;\n\n// Return formatted data with telegramId and rawNutritionData for formatting\nreturn [{\n  json: {\n    telegramId: telegramId,\n    rawNutritionData: rawNutritionData\n  }\n}];"
+      },
+      "id": "b21a3adc-5a0f-40b6-b9b9-43573606edca",
+      "name": "Parse Meal Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2944,
+        2368
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the parsed meal data from the Parse Meal Data node\nconst mealData = $('Parse Meal Data').first().json;\nconst nutritionData = mealData.rawNutritionData;\n\n// Build the formatted message\nlet message = `🍽️ *Meal Analysis Complete!*\\n\\n`;\nmessage += `📝 *${nutritionData.meal_description}*\\n\\n`;\n\n// Add food items breakdown\nif (nutritionData.food_items && nutritionData.food_items.length > 0) {\n  message += `🥗 *Food Items:*\\n`;\n  nutritionData.food_items.forEach((item, index) => {\n    message += `\\n${index + 1}. *${item.name}* (${item.portion})\\n`;\n    message += `   • Calories: ${item.calories} kcal\\n`;\n    message += `   • Protein: ${item.protein_g}g | Carbs: ${item.carbs_g}g | Fat: ${item.fat_g}g\\n`;\n  });\n  message += `\\n`;\n}\n\n// Add total nutrition summary\nmessage += `📊 *Total Nutrition:*\\n`;\nmessage += `🔥 Calories: *${nutritionData.total.calories} kcal*\\n`;\nmessage += `💪 Protein: *${nutritionData.total.protein_g}g*\\n`;\nmessage += `🌾 Carbs: *${nutritionData.total.carbs_g}g*\\n`;\nmessage += `🥑 Fat: *${nutritionData.total.fat_g}g*\\n\\n`;\n\n// Add confidence level\nif (nutritionData.confidence === 'high') {\n  message += `✅ Analysis confidence: High\\n`;\n} else {\n  message += `⚠️ Analysis confidence: Low (estimates may vary)\\n`;\n}\n\nmessage += `\\n🎯 Keep up the great work tracking your nutrition!`;\n\n// Return the formatted data\nreturn [{\n  json: {\n    telegramId: mealData.telegramId,\n    formattedMessage: message\n  }\n}];"
+      },
+      "id": "63ce2c5b-0b3d-4c71-b9b7-2e795a4a9142",
+      "name": "Format Nutrition Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3152,
+        2576
+      ]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.telegramId }}",
+        "text": "={{ $json.formattedMessage }}",
+        "additionalFields": {}
+      },
+      "id": "9f558cc5-427a-4c96-bee6-997e644a58d0",
+      "name": "Send Nutrition Info1",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        3392,
+        2576
+      ],
+      "webhookId": "af4ee1a5-132a-4f17-8631-05f6ec3e2132",
+      "credentials": {
+        "telegramApi": {
+          "id": "ZfFaHR6TzpJ83ahs",
+          "name": "Telegram account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Meal Analysis",
+        "height": 480,
+        "width": 448,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2640,
+        2320
+      ],
+      "id": "a55f679b-a058-4b8f-b568-ef67de44e7bb",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the parsed meal data from the Parse Meal Data node\nconst parsedData = $('Parse Meal Data').first().json;\nconst nutritionData = parsedData.rawNutritionData;\n\n// Get current date in ISO format for Notion Date property\nconst now = new Date();\nconst date = now.toISOString(); // Full ISO format for Notion\n\n// Format food items as a concatenated string with portions and macros\nlet foodItemsString = '';\nif (nutritionData.food_items && nutritionData.food_items.length > 0) {\n  foodItemsString = nutritionData.food_items.map(item => {\n    return `${item.name} (${item.portion}) - ${item.calories} kcal, P: ${item.protein_g}g, C: ${item.carbs_g}g, F: ${item.fat_g}g`;\n  }).join(' | ');\n}\n\n// Extract nutrition data from rawNutritionData\nconst protein = nutritionData.total.protein_g;\nconst carbs = nutritionData.total.carbs_g;\nconst fat = nutritionData.total.fat_g;\nconst calories = nutritionData.total.calories;\nconst mealDescription = nutritionData.meal_description;\n\n// Return formatted data for Notion with mapped columns\nreturn [{\n  json: {\n    name: mealDescription,\n    date: date,\n    food: foodItemsString,\n    protein: protein,\n    carbs: carbs,\n    fat: fat,\n    calories: calories\n  }\n}];"
+      },
+      "id": "51514a68-ac56-4d0f-8847-8aca268e40c5",
+      "name": "Prepare Notion Data",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3152,
+        2384
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "databasePage",
+        "databaseId": {
+          "__rl": true,
+          "value": "28ea06e1-4bbb-801a-bb7b-eb2164a5b10b",
+          "mode": "list",
+          "cachedResultName": "Eat in Sight",
+          "cachedResultUrl": "https://www.notion.so/28ea06e14bbb801abb7beb2164a5b10b"
+        },
+        "title": "={{ $json.name }}",
+        "simple": false,
+        "propertiesUi": {
+          "propertyValues": [
+            {
+              "key": "Date|date",
+              "includeTime": false,
+              "date": "={{ $json.date }}"
+            },
+            {
+              "key": "Total Calories|number"
+            },
+            {
+              "key": "Protein|number",
+              "numberValue": "={{ $json.protein }}"
+            },
+            {
+              "key": "Carbs|number",
+              "numberValue": "={{ $json.carbs }}"
+            },
+            {
+              "key": "Fat|number",
+              "numberValue": "={{ $json.fat }}"
+            },
+            {
+              "key": "Total Calories|number",
+              "numberValue": "={{ $json.calories }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8cd0f69b-c47b-4c69-b3b9-12ff57eadd34",
+      "name": "Add Meal to Notion",
+      "type": "n8n-nodes-base.notion",
+      "typeVersion": 2.2,
+      "position": [
+        3392,
+        2384
+      ],
+      "credentials": {
+        "notionApi": {
+          "id": "YlSfTlfD8a59lS2e",
+          "name": "Notion account 3"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "Data Sharing",
+        "height": 480,
+        "width": 448,
+        "color": 7
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        3120,
+        2320
+      ],
+      "id": "2b0fe958-e3ef-4644-9134-2056ac672ec5",
+      "name": "Sticky Note2"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Get a file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a file": {
+      "main": [
+        [
+          {
+            "node": "Analyze an image",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Convert Binary to Base64",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert Binary to Base64": {
+      "main": [
+        []
+      ]
+    },
+    "Analyze an image": {
+      "main": [
+        [
+          {
+            "node": "Parse Meal Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Meal Data": {
+      "main": [
+        [
+          {
+            "node": "Format Nutrition Message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Prepare Notion Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Nutrition Message": {
+      "main": [
+        [
+          {
+            "node": "Send Nutrition Info1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Notion Data": {
+      "main": [
+        [
+          {
+            "node": "Add Meal to Notion",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1b696b63-50a9-46e7-863f-967a009bd7b4",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e4e5069a2be13cc18d32a6e68d73d6f9f08e3726be301104a986be30a8e42b41"
+  },
+  "id": "NshxmEW9tIsShK2J",
+  "tags": []
+}
